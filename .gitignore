@@ -1,0 +1,30 @@
+# Node dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Extension packages
+*.zip
+*.xpi
+*.crx
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and OS
+.DS_Store
+.vscode/settings.json
+.idea/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo

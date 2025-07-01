@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "Firefox Dev Recorder",
+  "version": "0.1.0",
+  "description": "Records browser review sessions for AI context capture.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "firefox-dev-recorder@jrbeverly",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "webNavigation",
+    "storage",
+    "scripting",
+    "downloads"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["src/background/service-worker.js"]
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Open Recorder"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/content.js"]
+    }
+  ],
+  "commands": {
+    "take-screenshot": {
+      "suggested_key": {
+        "default": "Alt+S"
+      },
+      "description": "Capture a screenshot of the current tab"
+    },
+    "add-marker": {
+      "suggested_key": {
+        "default": "Alt+M"
+      },
+      "description": "Add a context marker at the current moment"
+    }
+  }
+}

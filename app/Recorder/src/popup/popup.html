@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dev Recorder</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 360px;
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        background: #fff;
+        color: #1a1a1a;
+      }
+
+      /* ---- Tabs ---- */
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 0 16px;
+      }
+
+      .tab {
+        flex: 1;
+        padding: 10px 4px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        color: #888;
+        cursor: pointer;
+        margin-bottom: -1px;
+        transition: color 0.1s;
+      }
+
+      .tab[aria-selected="true"] {
+        color: #1a1a1a;
+        border-bottom-color: #1a7f4b;
+      }
+
+      /* ---- Panels ---- */
+      .panel {
+        padding: 16px;
+      }
+
+      /* ---- Status indicator ---- */
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        background: #f5f5f5;
+        margin-bottom: 16px;
+      }
+
+      .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: #9e9e9e;
+      }
+
+      .status-dot[data-state="recording"] {
+        background: #e03131;
+        animation: pulse-dot 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse-dot {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.35; }
+      }
+
+      .status-label {
+        font-weight: 600;
+        color: #333;
+      }
+
+      /* ---- Button groups ---- */
+      .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .btn-group--row {
+        flex-direction: row;
+      }
+
+      /* ---- Button base ---- */
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .btn--start {
+        background: #1a7f4b;
+        color: #fff;
+      }
+
+      .btn--start:not(:disabled):hover {
+        background: #158040;
+      }
+
+      .btn--stop {
+        background: #c0392b;
+        color: #fff;
+      }
+
+      .btn--stop:not(:disabled):hover {
+        background: #a93226;
+      }
+
+      .btn--secondary {
+        background: #fff;
+        color: #333;
+        border: 1px solid #ccc;
+        flex: 1;
+      }
+
+      .btn--secondary:not(:disabled):hover {
+        background: #f5f5f5;
+      }
+
+      .btn--danger {
+        background: #fff;
+        color: #c0392b;
+        border: 1px solid #c0392b;
+      }
+
+      .btn--danger:not(:disabled):hover {
+        background: #fdf2f2;
+      }
+
+      .btn--xs {
+        width: auto;
+        flex: none;
+        padding: 4px 10px;
+        font-size: 12px;
+        border-radius: 4px;
+      }
+
+      .marker-feedback {
+        min-height: 18px;
+        margin-top: 6px;
+        font-size: 12px;
+        color: #1a7f4b;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.1s ease;
+      }
+
+      .marker-feedback.visible {
+        opacity: 1;
+      }
+
+      /* ---- Error / warning banners ---- */
+      .banner {
+        display: none;
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 12px;
+      }
+
+      .banner.visible {
+        display: block;
+      }
+
+      .banner--error {
+        background: #fdf2f2;
+        border: 1px solid #e8b4b4;
+        color: #7b1919;
+      }
+
+      .banner--warning {
+        background: #fffbf0;
+        border: 1px solid #e8d89c;
+        color: #7a5c00;
+      }
+
+      .banner-title {
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .banner-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+
+      .banner-link {
+        background: none;
+        border: 1px solid currentColor;
+        border-radius: 4px;
+        padding: 3px 8px;
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+        color: inherit;
+      }
+
+      .banner-link:hover {
+        opacity: 0.75;
+      }
+
+      .banner-dismiss {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+        color: inherit;
+        opacity: 0.65;
+        margin-left: auto;
+        align-self: center;
+      }
+
+      /* ---- History panel ---- */
+      .history-list {
+        max-height: 480px;
+        overflow-y: auto;
+      }
+
+      .history-empty {
+        text-align: center;
+        padding: 32px 0;
+        color: #999;
+        font-size: 13px;
+      }
+
+      .history-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .history-item:last-child {
+        border-bottom: none;
+      }
+
+      .history-date {
+        font-size: 13px;
+        font-weight: 500;
+        color: #1a1a1a;
+        margin-bottom: 4px;
+      }
+
+      .history-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .history-meta-text {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .history-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+
+      .history-confirm {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+
+      .history-confirm-text {
+        flex: 1;
+        color: #c0392b;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Tab bar -->
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-recorder" role="tab" aria-selected="true" aria-controls="panel-recorder">Recorder</button>
+      <button class="tab" id="tab-history"  role="tab" aria-selected="false" aria-controls="panel-history">History</button>
+    </div>
+
+    <!-- Recorder panel -->
+    <div class="panel" id="panel-recorder" role="tabpanel">
+      <!-- Error banner (hidden until a SESSION_ERROR message arrives) -->
+      <div class="banner banner--error" id="error-banner" role="alert" aria-live="assertive">
+        <div class="banner-title">Recording error</div>
+        <div id="error-message"></div>
+        <div class="banner-actions">
+          <button class="banner-link" id="btn-open-permissions" hidden>Open Permissions Settings</button>
+          <button class="banner-dismiss" id="btn-dismiss-error">Dismiss</button>
+        </div>
+      </div>
+
+      <!-- Warning banner (storage quota or non-fatal write failures) -->
+      <div class="banner banner--warning" id="warning-banner" role="status" aria-live="polite">
+        <div id="warning-message"></div>
+        <div class="banner-actions">
+          <button class="banner-dismiss" id="btn-dismiss-warning">Dismiss</button>
+        </div>
+      </div>
+
+      <div class="status">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-label" id="status-label">Idle</span>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn--start" id="btn-start">Start Session</button>
+        <button class="btn btn--stop" id="btn-stop" disabled>Stop Session</button>
+      </div>
+
+      <div class="btn-group btn-group--row">
+        <button class="btn btn--secondary" id="btn-marker" disabled>Add Marker</button>
+        <button class="btn btn--secondary" id="btn-screenshot" disabled>Screenshot</button>
+      </div>
+      <div class="marker-feedback" id="marker-feedback" aria-live="polite"></div>
+    </div>
+
+    <!-- History panel -->
+    <div class="panel" id="panel-history" role="tabpanel" hidden>
+      <div class="history-list" id="history-list">
+        <p class="history-empty">Loading…</p>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
